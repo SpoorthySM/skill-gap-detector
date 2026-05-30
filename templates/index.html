@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillRadar — Placement Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #F5F3EE;
+  --bg2: #EDEAE3;
+  --card: #FFFFFF;
+  --card2: #FAF9F6;
+  --border: #E4E0D8;
+  --border2: #D4CFCA;
+  --primary: #5B4FE8;
+  --primary-light: #EEF0FF;
+  --primary-mid: #C5C2F5;
+  --accent: #00B894;
+  --accent-light: #E0F7F2;
+  --warn: #E17A2F;
+  --warn-light: #FDF0E6;
+  --red: #E05252;
+  --red-light: #FDF0F0;
+  --text: #1C1A17;
+  --text2: #6B6560;
+  --text3: #A09890;
+  --r: 16px;
+  --r-sm: 10px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+::selection { background: #C5C2F5; }
+
+body {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* subtle dot pattern */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image: radial-gradient(circle, #C8C4BC 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.35;
+  pointer-events:none;
+  z-index:0;
+}
+
+nav {
+  position: sticky;
+  top:0; z-index:100;
+  background: rgba(245,243,238,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2.5rem;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.02em;
+}
+.nav-logo-dot {
+  width: 10px; height: 10px;
+  background: var(--primary);
+  border-radius: 50%;
+}
+.nav-pill {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary-mid);
+  padding: 4px 14px;
+  border-radius: 100px;
+  letter-spacing: 0.04em;
+}
+
+.wrap { max-width: 1060px; margin: 0 auto; padding: 3rem 2rem 5rem; position: relative; z-index:1; }
+
+/* hero */
+.hero { text-align: center; padding: 2.5rem 0 3rem; }
+.eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--primary);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.eyebrow::before,.eyebrow::after { content:''; width:32px; height:1px; background:var(--primary-mid); }
+.hero h1 {
+  font-size: clamp(2.2rem, 4.5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--primary) 0%, #9B8FF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero p {
+  color: var(--text2);
+  font-size: 1.05rem;
+  max-width: 460px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.7;
+  font-weight: 400;
+}
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  margin-bottom: 3rem;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.hstat {
+  flex: 1;
+  padding: 1rem;
+  background: var(--card);
+  text-align: center;
+}
+.hstat:first-child { border-radius: var(--r) 0 0 var(--r); }
+.hstat:last-child { border-radius: 0 var(--r) var(--r) 0; }
+.hstat .n {
+  font-family: 'DM Mono', monospace;
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--primary);
+}
+.hstat .l { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+/* cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.75rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+.card-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-label .dot { width:6px;height:6px;border-radius:50%;background:var(--primary); }
+
+/* tabs */
+.tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg2);
+  padding: 3px;
+  border-radius: var(--r-sm);
+  margin-bottom: 1.25rem;
+  width: fit-content;
+  border: 1px solid var(--border);
+}
+.tab {
+  padding: 7px 20px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  background: transparent;
+  color: var(--text2);
+}
+.tab.active { background: var(--card); color: var(--primary); box-shadow: var(--shadow); }
+
+/* form */
+.field { margin-bottom: 1.1rem; }
+.field label {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+textarea, select {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 11px 15px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: border 0.18s, background 0.18s;
+}
+textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+textarea:focus, select:focus { border-color: var(--primary); background: #fff; }
+textarea::placeholder { color: var(--text3); }
+select { cursor: pointer; appearance: none; }
+
+/* upload */
+.upload-zone {
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--r-sm);
+  padding: 2.25rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.18s;
+  background: var(--bg);
+}
+.upload-zone:hover { border-color: var(--primary); background: var(--primary-light); }
+.upload-zone .up-icon { font-size: 1.75rem; color: var(--primary); margin-bottom: 0.6rem; display: block; opacity: 0.7; }
+.upload-zone p { color: var(--text2); font-size: 14px; }
+.upload-zone .hint { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3); margin-top:4px; }
+#resume-input { display:none; }
+.upload-msg { margin-top:10px; font-family:'DM Mono',monospace; font-size:12px; display:none; gap:6px; align-items:center; }
+.upload-msg.ok { color:var(--accent); display:flex; }
+.upload-msg.err { color:var(--red); display:flex; }
+
+/* chips */
+.chips-wrap {
+  display:flex; flex-wrap:wrap; gap:7px;
+  padding:12px; background:var(--bg);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm); min-height:50px;
+}
+.chip {
+  font-family:'DM Mono',monospace; font-size:12px;
+  padding:4px 12px; border-radius:100px;
+  background:var(--primary-light);
+  border:1px solid var(--primary-mid);
+  color:var(--primary);
+  display:flex; align-items:center; gap:5px;
+}
+.chip .x { cursor:pointer; opacity:0.5; }
+.chip .x:hover { opacity:1; }
+
+/* buttons */
+.btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:1.5rem; }
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: var(--r-sm);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: inline-flex; align-items: center; gap: 8px;
+  box-shadow: 0 4px 14px rgba(91,79,232,0.25);
+}
+.btn-primary:hover { background: #4840C8; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(91,79,232,0.3); }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-ghost {
+  background: var(--card);
+  color: var(--text2);
+  border: 1.5px solid var(--border2);
+  padding: 11px 24px;
+  border-radius: var(--r-sm);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+
+/* loading */
+#loading { display:none; text-align:center; padding:4rem; }
+.spinner { width:44px;height:44px;border:2.5px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1.25rem; }
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p { font-family:'DM Mono',monospace; font-size:13px; color:var(--text2); }
+
+/* results */
+#results { display:none; }
+
+/* score hero */
+.score-card {
+  background: linear-gradient(135deg, #5B4FE8 0%, #8B7CF8 100%);
+  border-radius: var(--r);
+  padding: 2.25rem;
+  margin-bottom: 1.25rem;
+  color: #fff;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+  box-shadow: 0 8px 32px rgba(91,79,232,0.3);
+  position: relative;
+  overflow: hidden;
+}
+.score-card::before {
+  content:'';
+  position:absolute;
+  top:-60px; right:-60px;
+  width:200px;height:200px;
+  background:rgba(255,255,255,0.07);
+  border-radius:50%;
+}
+.score-card::after {
+  content:'';
+  position:absolute;
+  bottom:-40px; left:30%;
+  width:150px;height:150px;
+  background:rgba(255,255,255,0.05);
+  border-radius:50%;
+}
+.sc-label { font-family:'DM Mono',monospace; font-size:11px; opacity:0.7; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:6px; }
+.sc-role { font-size:1.4rem; font-weight:700; margin-bottom:1.1rem; letter-spacing:-0.02em; }
+.sc-bar-track { height:6px; background:rgba(255,255,255,0.2); border-radius:100px; overflow:hidden; max-width:440px; margin-bottom:1rem; }
+.sc-bar-fill { height:100%;background:#fff;border-radius:100px;transition:width 1.4s cubic-bezier(0.34,1.56,0.64,1);width:0%; }
+.sc-meta { display:flex; gap:2rem; flex-wrap:wrap; }
+.sc-meta-item .v { font-family:'DM Mono',monospace; font-size:1rem; font-weight:500; }
+.sc-meta-item .k { font-size:11px; opacity:0.65; margin-top:2px; font-family:'DM Mono',monospace; }
+.sc-big { font-family:'DM Mono',monospace; font-size:4.5rem; font-weight:500; line-height:1; text-align:center; }
+.sc-badge {
+  font-family:'DM Mono',monospace; font-size:11px;
+  padding:4px 14px; border-radius:100px;
+  background:rgba(255,255,255,0.2);
+  border:1px solid rgba(255,255,255,0.3);
+  text-align:center; margin-top:8px; display:block;
+}
+
+/* stat grid */
+.grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.25rem; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem; }
+@media(max-width:680px){ .grid4{grid-template-columns:repeat(2,1fr);} .grid2{grid-template-columns:1fr;} }
+
+.stat-card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:1.25rem;
+  text-align:center;
+  box-shadow:var(--shadow);
+}
+.stat-card .n { font-family:'DM Mono',monospace; font-size:2rem; font-weight:500; margin-bottom:4px; }
+.stat-card .l { font-size:12px; color:var(--text3); font-family:'DM Mono',monospace; letter-spacing:0.04em; }
+
+/* chart panels */
+.chart-panel { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:1.75rem; box-shadow:var(--shadow); }
+.panel-title { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:1.25rem; }
+.chart-wrap { height:240px; position:relative; }
+
+/* skill items */
+.skills-panel { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:1.75rem; box-shadow:var(--shadow); }
+.skill-item {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 13px; border-radius:8px;
+  font-size:13px; font-family:'DM Mono',monospace;
+  margin-bottom:5px; border:1px solid transparent;
+  transition: all 0.15s;
+}
+.skill-item:hover { background:var(--bg); }
+.skill-item.matched { background:#F0FBF8; border-color:#C8EFE7; }
+.skill-item.missing { background:#FDF4F4; border-color:#F5D0D0; }
+.skill-item.partial { background:#FEF8F0; border-color:#F5DEB8; }
+.skill-dot { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
+.dot-green { background:var(--accent); }
+.dot-red { background:var(--red); }
+.dot-yellow { background:var(--warn); }
+.skill-name { flex:1; font-size:12px; }
+.skill-cat { font-size:10px; padding:2px 8px; border-radius:100px; letter-spacing:0.04em; }
+.cat-technical { background:var(--primary-light); color:var(--primary); border:1px solid var(--primary-mid); }
+.cat-soft { background:var(--accent-light); color:#00796B; border:1px solid #B2DFDB; }
+.cat-tools { background:var(--warn-light); color:var(--warn); border:1px solid #F5C69A; }
+
+/* roadmap */
+.roadmap-item {
+  display:flex; gap:14px; padding:1.1rem 1.25rem;
+  border:1.5px solid var(--border); border-radius:var(--r-sm);
+  margin-bottom:8px; background:var(--card2);
+  transition:all 0.18s; align-items:flex-start;
+}
+.roadmap-item:hover { border-color:var(--primary-mid); background:var(--primary-light); }
+.roadmap-num { font-family:'DM Mono',monospace; font-size:11px; color:var(--primary); width:22px; padding-top:2px; flex-shrink:0; font-weight:500; }
+.roadmap-body h4 { font-size:14px; font-weight:600; margin-bottom:3px; text-transform:capitalize; }
+.roadmap-body p { font-size:12px; color:var(--text2); font-family:'DM Mono',monospace; }
+.roadmap-meta { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.tag { font-family:'DM Mono',monospace; font-size:10px; padding:3px 10px; border-radius:100px; border:1px solid var(--border2); color:var(--text2); }
+.tag-p { border-color:var(--primary-mid); color:var(--primary); background:var(--primary-light); }
+.tag-h { border-color:#F5D0D0; color:var(--red); background:var(--red-light); }
+.roadmap-link { font-family:'DM Mono',monospace; font-size:11px; color:var(--primary); text-decoration:none; display:inline-flex; align-items:center; gap:4px; margin-top:6px; }
+.roadmap-link:hover { text-decoration:underline; }
+
+/* ai recs */
+.ai-rec { border-left:2.5px solid var(--primary); padding:1.1rem 1.25rem; background:var(--primary-light); border-radius:0 var(--r-sm) var(--r-sm) 0; margin-bottom:8px; }
+.ai-tag { font-family:'DM Mono',monospace; font-size:10px; color:var(--primary); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:6px; }
+.ai-rec h4 { font-size:14px; font-weight:600; margin-bottom:5px; }
+.ai-rec p { font-size:13px; color:var(--text2); line-height:1.6; }
+
+/* compare */
+.compare-row {
+  display:flex; align-items:center; gap:14px;
+  padding:11px 14px; border:1px solid var(--border);
+  border-radius:var(--r-sm); margin-bottom:6px;
+  background:var(--card2); transition:all 0.18s;
+}
+.compare-row:hover { border-color:var(--primary-mid); background:var(--primary-light); }
+.compare-role { font-size:13px; font-family:'DM Mono',monospace; min-width:200px; color:var(--text2); }
+.compare-track { flex:1;height:5px;background:var(--bg2);border-radius:100px;overflow:hidden; }
+.compare-fill { height:100%;border-radius:100px;background:linear-gradient(90deg,var(--primary),#9B8FF8);transition:width 1s ease; }
+.compare-pct { font-family:'DM Mono',monospace;font-size:13px;min-width:44px;text-align:right;color:var(--primary);font-weight:500; }
+
+/* bonus */
+.bonus-chip { font-family:'DM Mono',monospace;font-size:12px;padding:5px 14px;border-radius:100px;background:var(--accent-light);border:1px solid #B2DFDB;color:#00796B; }
+
+/* toast */
+.toast { position:fixed;bottom:1.5rem;right:1.5rem;background:var(--text);color:#fff;padding:11px 18px;border-radius:var(--r-sm);font-family:'DM Mono',monospace;font-size:12px;z-index:1000;opacity:0;transform:translateY(8px);transition:all 0.25s;display:flex;align-items:center;gap:7px; }
+.toast.show { opacity:1;transform:translateY(0); }
+
+.reset-row { text-align:center;margin:2rem 0; }
+
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border2);border-radius:3px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    SkillRadar
+  </div>
+  <div class="nav-pill">AI + ML Powered</div>
+</nav>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">Placement Intelligence System</div>
+    <h1>Know Your Gap.<br><em>Own Your Future.</em></h1>
+    <p>AI-powered skill analysis against real job market data. Get your readiness score, find your gaps, and build your path to placement.</p>
+    <div class="hero-stats">
+      <div class="hstat"><div class="n">3.3M+</div><div class="l">Jobs Analyzed</div></div>
+      <div class="hstat"><div class="n">10</div><div class="l">Tech Roles</div></div>
+      <div class="hstat"><div class="n">78%</div><div class="l">ML Accuracy</div></div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="card">
+    <div class="card-label"><div class="dot"></div> Your Profile</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('manual')">Type Skills</button>
+      <button class="tab" onclick="switchTab('upload')">Upload Resume</button>
+    </div>
+
+    <div id="tab-manual">
+      <div class="field">
+        <label>Your Skills — comma separated</label>
+        <textarea id="skills-input" placeholder="e.g. Python, Machine Learning, SQL, Data Structures, Algorithms, React, Git, Statistics..."></textarea>
+      </div>
+    </div>
+
+    <div id="tab-upload" style="display:none;">
+      <div class="upload-zone" onclick="document.getElementById('resume-input').click()" id="drop-zone">
+        <span class="up-icon">↑</span>
+        <p><strong>Drop your resume</strong> or click to browse</p>
+        <p class="hint">PDF · TXT — AI extracts your skills automatically</p>
+      </div>
+      <input type="file" id="resume-input" accept=".pdf,.txt" onchange="handleUpload(event)">
+      <div id="upload-msg"></div>
+      <div id="chips-wrap-outer" style="display:none;margin-top:1rem;">
+        <div class="field">
+          <label>Extracted Skills</label>
+          <div class="chips-wrap" id="chips-wrap"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:1.1rem;">
+      <label>Target Role</label>
+      <select id="role-select"><option value="">— Select a role —</option></select>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="runAnalysis()" id="analyze-btn">→ Analyze Gap</button>
+      <button class="btn-ghost" onclick="compareRoles()" id="compare-btn">⊞ Compare All Roles</button>
+    </div>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>analyzing your profile...</p>
+  </div>
+
+  <div id="results">
+    <!-- Score -->
+    <div class="score-card" id="score-card">
+      <div>
+        <div class="sc-label">Readiness Score</div>
+        <div class="sc-role" id="sc-role">—</div>
+        <div class="sc-bar-track"><div class="sc-bar-fill" id="sc-bar"></div></div>
+        <div class="sc-meta" id="sc-meta"></div>
+      </div>
+      <div>
+        <div class="sc-big" id="sc-num">0%</div>
+        <span class="sc-badge" id="sc-badge">—</span>
+      </div>
+    </div>
+
+    <div class="grid4" id="stats-grid"></div>
+
+    <div class="grid2">
+      <div class="chart-panel"><div class="panel-title">Skill Profile</div><div class="chart-wrap"><canvas id="radar-chart"></canvas></div></div>
+      <div class="chart-panel"><div class="panel-title">Match Overview</div><div class="chart-wrap"><canvas id="donut-chart"></canvas></div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="skills-panel">
+        <div class="panel-title" style="color:var(--accent);">✓ Matched Skills</div>
+        <div id="matched-list"></div>
+      </div>
+      <div class="skills-panel">
+        <div class="panel-title" style="color:var(--red);">✗ Missing Skills</div>
+        <div id="missing-list"></div>
+      </div>
+    </div>
+
+    <div class="card" id="partial-panel" style="display:none;">
+      <div class="panel-title" style="color:var(--warn);">≈ Partial / Adjacent Skills</div>
+      <div id="partial-list"></div>
+    </div>
+
+    <div class="card" id="bonus-panel" style="display:none;">
+      <div class="panel-title">★ Bonus Skills You Have</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="bonus-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="panel-title">→ Learning Roadmap</div>
+      <div id="roadmap-list"></div>
+    </div>
+
+    <div class="card" id="ai-panel" style="display:none;">
+      <div class="panel-title">✦ AI Recommendations</div>
+      <div id="ai-list"></div>
+    </div>
+
+    <div class="card" id="compare-panel" style="display:none;">
+      <div class="panel-title">⊞ Role Comparison</div>
+      <div id="compare-list"></div>
+    </div>
+
+    <div class="reset-row">
+      <button class="btn-ghost" onclick="resetAll()">↩ Start Over</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentSkills=[], activeTab='manual', radarChart=null, donutChart=null;
+
+async function loadRoles(){
+  try{
+    const res=await fetch('/api/roles');
+    const data=await res.json();
+    const sel=document.getElementById('role-select');
+    data.roles.forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o);});
+  }catch(e){}
+}
+loadRoles();
+
+function switchTab(tab){
+  activeTab=tab;
+  document.getElementById('tab-manual').style.display=tab==='manual'?'':'none';
+  document.getElementById('tab-upload').style.display=tab==='upload'?'':'none';
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='manual')||(i===1&&tab==='upload')));
+}
+
+async function handleUpload(e){
+  const file=e.target.files[0]; if(!file)return;
+  const msg=document.getElementById('upload-msg');
+  msg.style.cssText='display:flex;font-family:DM Mono,monospace;font-size:12px;color:var(--text2);margin-top:10px;gap:6px;align-items:center;';
+  msg.innerHTML='⟳ Extracting skills...';
+  const fd=new FormData(); fd.append('resume',file);
+  try{
+    const res=await fetch('/api/upload-resume',{method:'POST',body:fd});
+    const data=await res.json();
+    if(data.error)throw new Error(data.error);
+    currentSkills=data.skills||[];
+    msg.className='upload-msg ok'; msg.innerHTML=`✓ Extracted ${currentSkills.length} skills`;
+    renderChips(); document.getElementById('chips-wrap-outer').style.display='';
+  }catch(err){ msg.className='upload-msg err'; msg.innerHTML=`✗ ${err.message}`; }
+}
+
+function renderChips(){
+  const w=document.getElementById('chips-wrap'); w.innerHTML='';
+  currentSkills.forEach((s,i)=>{
+    const c=document.createElement('span'); c.className='chip';
+    c.innerHTML=`${s}<span class="x" onclick="removeChip(${i})">×</span>`; w.appendChild(c);
+  });
+}
+function removeChip(i){currentSkills.splice(i,1);renderChips();}
+
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='var(--primary)';});
+dz.addEventListener('dragleave',()=>{dz.style.borderColor='';});
+dz.addEventListener('drop',e=>{e.preventDefault();dz.style.borderColor='';if(e.dataTransfer.files.length){document.getElementById('resume-input').files=e.dataTransfer.files;handleUpload({target:{files:e.dataTransfer.files}});}});
+
+async function runAnalysis(){
+  const role=document.getElementById('role-select').value;
+  if(!role){showToast('Select a job role first');return;}
+  let payload,mode;
+  if(activeTab==='manual'){
+    payload=document.getElementById('skills-input').value.trim();
+    if(!payload){showToast('Enter your skills first');return;}
+    mode='manual';
+  }else{
+    if(!currentSkills.length){showToast('Upload a resume first');return;}
+    payload=JSON.stringify(currentSkills); mode='extracted';
+  }
+  document.getElementById('loading').style.display='block';
+  document.getElementById('results').style.display='none';
+  document.getElementById('analyze-btn').disabled=true;
+  try{
+    const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({skills:payload,job_role:role,input_mode:mode})});
+    const data=await res.json();
+    if(data.error)throw new Error(data.error);
+    renderResults(data);
+  }catch(err){showToast('Error: '+err.message);}
+  finally{document.getElementById('loading').style.display='none';document.getElementById('analyze-btn').disabled=false;}
+}
+
+function renderResults(data){
+  document.getElementById('results').style.display='block';
+  window.scrollTo({top:document.getElementById('results').offsetTop-20,behavior:'smooth'});
+  const score=data.readiness_score;
+  document.getElementById('sc-num').textContent=score+'%';
+  document.getElementById('sc-role').textContent=data.job_role;
+  document.getElementById('sc-badge').textContent=data.label;
+  setTimeout(()=>{document.getElementById('sc-bar').style.width=score+'%';},100);
+  document.getElementById('sc-meta').innerHTML=`
+    <div class="sc-meta-item"><div class="v">${data.stats.total_matched}</div><div class="k">Matched</div></div>
+    <div class="sc-meta-item"><div class="v">${data.stats.total_missing}</div><div class="k">Missing</div></div>
+    <div class="sc-meta-item"><div class="v">${data.tech_score}%</div><div class="k">Tech Score</div></div>`;
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card"><div class="n" style="color:var(--primary)">${score}%</div><div class="l">Overall</div></div>
+    <div class="stat-card"><div class="n" style="color:var(--accent)">${data.stats.total_matched}</div><div class="l">Matched</div></div>
+    <div class="stat-card"><div class="n" style="color:var(--red)">${data.stats.total_missing}</div><div class="l">Missing</div></div>
+    <div class="stat-card"><div class="n" style="color:var(--primary)">${data.tech_score}%</div><div class="l">Tech Score</div></div>`;
+  renderCharts(data);
+  const ml=document.getElementById('matched-list'),mi=document.getElementById('missing-list');
+  ml.innerHTML=''; mi.innerHTML='';
+  if(!data.matched.length)ml.innerHTML='<div style="font-family:DM Mono,monospace;font-size:12px;color:var(--text3);padding:.75rem;">No matches yet</div>';
+  data.matched.forEach(s=>{ml.innerHTML+=`<div class="skill-item matched"><div class="skill-dot dot-green"></div><span class="skill-name">${s.skill}</span><span class="skill-cat cat-${s.category}">${s.category}</span></div>`;});
+  if(!data.missing.length)mi.innerHTML='<div style="font-family:DM Mono,monospace;font-size:12px;color:var(--accent);padding:.75rem;">✓ All skills present!</div>';
+  data.missing.slice(0,12).forEach(s=>{mi.innerHTML+=`<div class="skill-item missing"><div class="skill-dot dot-red"></div><span class="skill-name">${s.skill}</span><span class="skill-cat cat-${s.category}">${s.category}</span></div>`;});
+  if(data.partial.length){
+    document.getElementById('partial-panel').style.display='';
+    const pl=document.getElementById('partial-list'); pl.innerHTML='';
+    data.partial.forEach(s=>{pl.innerHTML+=`<div class="skill-item partial"><div class="skill-dot dot-yellow"></div><span class="skill-name">${s.skill}</span><span class="skill-cat cat-${s.category}">${s.category}</span></div>`;});
+  }
+  if(data.bonus_skills.length){
+    document.getElementById('bonus-panel').style.display='';
+    document.getElementById('bonus-list').innerHTML=data.bonus_skills.map(s=>`<span class="bonus-chip">${s}</span>`).join('');
+  }
+  const rl=document.getElementById('roadmap-list'); rl.innerHTML='';
+  data.recommendations.forEach((r,i)=>{
+    rl.innerHTML+=`<div class="roadmap-item"><div class="roadmap-num">${String(i+1).padStart(2,'0')}</div><div class="roadmap-body"><h4>${r.skill}</h4><p>${r.platform}</p><div class="roadmap-meta"><span class="tag tag-p">${r.estimated_time}</span><span class="tag ${r.priority==='High'?'tag-h':''}">${r.priority} Priority</span></div><a href="${r.link}" target="_blank" class="roadmap-link">Start learning →</a></div></div>`;
+  });
+  if(data.ai_recommendations&&data.ai_recommendations.length){
+    document.getElementById('ai-panel').style.display='';
+    const al=document.getElementById('ai-list'); al.innerHTML='';
+    data.ai_recommendations.forEach(r=>{al.innerHTML+=`<div class="ai-rec"><div class="ai-tag">AI Insight</div><h4>${r.title}</h4><p>${r.detail}</p>${r.timeframe?`<div style="margin-top:7px;font-family:DM Mono,monospace;font-size:11px;color:var(--primary);">→ ${r.timeframe}</div>`:''}</div>`;});
+  }
+}
+
+function renderCharts(data){
+  if(radarChart)radarChart.destroy();
+  if(donutChart)donutChart.destroy();
+  const techM=data.matched.filter(x=>x.category==='technical').length;
+  const techT=data.stats.tech_total||1;
+  const softM=data.matched.filter(x=>x.category==='soft').length;
+  const softT=data.missing.filter(x=>x.category==='soft').length+softM||1;
+  const toolM=data.matched.filter(x=>x.category==='tools').length;
+  const toolT=data.missing.filter(x=>x.category==='tools').length+toolM||1;
+  radarChart=new Chart(document.getElementById('radar-chart'),{type:'radar',data:{labels:['Technical','Soft Skills','Tools','CS Core'],datasets:[{data:[Math.round(techM/techT*100),Math.round(softM/softT*100),Math.round(toolM/toolT*100),data.tech_score],backgroundColor:'rgba(91,79,232,0.1)',borderColor:'rgba(91,79,232,0.6)',borderWidth:2,pointBackgroundColor:'#5B4FE8',pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:10},color:'#A09890',backdropColor:'transparent'},grid:{color:'rgba(0,0,0,0.06)'},pointLabels:{font:{size:11,family:'DM Mono'},color:'#6B6560'},angleLines:{color:'rgba(0,0,0,0.06)'}}},plugins:{legend:{display:false}}}});
+  donutChart=new Chart(document.getElementById('donut-chart'),{type:'doughnut',data:{labels:['Matched','Partial','Missing'],datasets:[{data:[data.stats.total_matched,data.stats.total_partial,data.stats.total_missing],backgroundColor:['rgba(0,184,148,0.8)','rgba(225,122,47,0.8)','rgba(224,82,82,0.8)'],borderColor:['#00B894','#E17A2F','#E05252'],borderWidth:1.5,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:12,family:'DM Mono'},color:'#6B6560'}}}}});
+}
+
+async function compareRoles(){
+  let skills;
+  if(activeTab==='manual'){
+    const raw=document.getElementById('skills-input').value.trim();
+    if(!raw){showToast('Enter your skills first');return;}
+    skills=raw.split(/[,\n;|]/).map(s=>s.trim().toLowerCase()).filter(Boolean);
+  }else{
+    if(!currentSkills.length){showToast('Upload a resume first');return;}
+    skills=currentSkills;
+  }
+  document.getElementById('compare-btn').disabled=true;
+  try{
+    const res=await fetch('/api/compare-roles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({skills})});
+    const data=await res.json();
+    document.getElementById('compare-panel').style.display='';
+    const list=document.getElementById('compare-list'); list.innerHTML='';
+    data.comparisons.forEach(c=>{list.innerHTML+=`<div class="compare-row"><span class="compare-role">${c.role}</span><div class="compare-track"><div class="compare-fill" style="width:${c.score}%"></div></div><span class="compare-pct">${c.score}%</span></div>`;});
+    document.getElementById('compare-panel').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){showToast('Compare failed');}
+  finally{document.getElementById('compare-btn').disabled=false;}
+}
+
+function resetAll(){
+  document.getElementById('results').style.display='none';
+  document.getElementById('skills-input').value='';
+  document.getElementById('role-select').value='';
+  document.getElementById('chips-wrap-outer').style.display='none';
+  document.getElementById('upload-msg').style.display='none';
+  document.getElementById('compare-panel').style.display='none';
+  currentSkills=[];
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+</script>
+</body>
+</html>
