@@ -2,6 +2,9 @@ import re
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data.job_roles import JOB_ROLES, SKILL_CATEGORIES, LEARNING_RESOURCES
 
 def normalize(text):
