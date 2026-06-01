@@ -26,5 +26,4 @@ uploads/
 *.log
 
 # Large data files
-data/
-*.csv
+data/*.csv
