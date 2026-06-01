@@ -1,5 +1,7 @@
 # SkillRadar — Skill Gap Intelligence System
 
+🚀 **Live Demo**: https://skill-gap-detector-gp3o.onrender.com
+
 > AI + ML powered placement readiness analyzer for students
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat-square&logo=python)
