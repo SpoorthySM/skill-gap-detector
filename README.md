@@ -43,7 +43,6 @@ SkillRadar helps students preparing for placements understand exactly where they
 | Training Data | LinkedIn Job Postings Dataset (3.3M rows) |
 
 ---
-
 ## ML Model
 
 - **Dataset**: LinkedIn Job Postings (Kaggle) — 3.3M job postings
@@ -52,6 +51,22 @@ SkillRadar helps students preparing for placements understand exactly where they
 - **Model**: Random Forest (200 trees, balanced class weights)
 - **Accuracy**: 78.35% on held-out test set
 - **Best performing roles**: Data Analyst (92%), Data Engineer (87%), DevOps (83%)
+
+### Model Comparison
+
+Five classification models were evaluated on the same dataset:
+
+| Model | Accuracy |
+|-------|----------|
+| **SVM** | **80.31%** |
+| **Random Forest** | **78.35%** ← selected |
+| Logistic Regression | 71.37% |
+| Decision Tree | 71.37% |
+| KNN | 70.11% |
+
+![Model Comparison](model_comparison.png)
+
+> Although SVM achieved the highest accuracy (80.31%), **Random Forest was selected for deployment** due to its faster inference time, native probability estimation via `predict_proba()` which powers the confidence scores in the dashboard, and better interpretability through feature importance. The 2% accuracy difference does not justify the computational overhead of SVM in a real-time web application.
 
 ---
 
