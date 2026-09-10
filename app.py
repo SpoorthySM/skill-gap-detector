@@ -10,6 +10,9 @@ from google import genai
 from analyzer import analyze_gap, extract_skills_from_text, parse_manual_skills, get_all_roles
 from data.job_roles import JOB_ROLES
 from ml_predictor import ml_analyze, predict_role
+from db import init_db, get_skill_count_by_role
+
+db_conn = init_db()
 
 load_dotenv()
 
@@ -182,6 +185,10 @@ def compare_roles():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/role-stats", methods=["GET"])
+def role_stats():
+    stats = get_skill_count_by_role(db_conn)
+    return jsonify(stats.to_dict(orient="records"))
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
