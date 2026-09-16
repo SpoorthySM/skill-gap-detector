@@ -455,6 +455,126 @@ select { cursor: pointer; appearance: none; }
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-track { background:var(--bg); }
 ::-webkit-scrollbar-thumb { background:var(--border2);border-radius:3px; }
+/* SQL Insights */
+.insights-section {
+  max-width: 1060px;
+  margin: 3rem auto 5rem;
+  padding: 0 2rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--primary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.section-header h2 {
+  font-size: 1.8rem;
+  margin: 5px 0 6px;
+  letter-spacing: -0.02em;
+}
+
+.section-header p {
+  color: var(--text2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.btn-secondary {
+  background: var(--card);
+  color: var(--primary);
+  border: 1.5px solid var(--primary-mid);
+  padding: 10px 18px;
+  border-radius: var(--r-sm);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.insight-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.insight-card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.insight-description {
+  color: var(--text3);
+  font-size: 11px;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.insight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.insight-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 11px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+}
+
+.insight-row strong {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.insight-empty {
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+}
+
+@media(max-width:800px) {
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 </style>
 </head>
 <body>
@@ -575,11 +695,6 @@ select { cursor: pointer; appearance: none; }
       <div id="roadmap-list"></div>
     </div>
 
-    <div class="card" id="ai-panel" style="display:none;">
-      <div class="panel-title">✦ AI Recommendations</div>
-      <div id="ai-list"></div>
-    </div>
-
     <div class="card" id="compare-panel" style="display:none;">
       <div class="panel-title">⊞ Role Comparison</div>
       <div id="compare-list"></div>
@@ -590,6 +705,55 @@ select { cursor: pointer; appearance: none; }
     </div>
   </div>
 </div>
+
+<!-- Insights Section -->
+<section class="insights-section" id="insights-section">
+  <div class="section-header">
+    <div>
+      <span class="section-tag">SQL INSIGHTS</span>
+      <h2>SkillRadar Insights</h2>
+      <p>Insights generated from SkillRadar analysis history and job-market data.</p>
+    </div>
+
+    <button class="btn-secondary" onclick="loadInsights()">
+      Refresh Insights
+    </button>
+  </div>
+
+  <div class="insights-grid">
+
+    <div class="insight-card">
+      <h3>Most Frequently Missing Skills</h3>
+      <p class="insight-description">
+        Skills most often identified as missing across analyses.
+      </p>
+      <div id="missing-skills-insight" class="insight-list">
+        <p class="insight-empty">No analysis data yet.</p>
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <h3>Analyses by Role</h3>
+      <p class="insight-description">
+        Number of SkillRadar analyses performed for each role.
+      </p>
+      <div id="role-analysis-insight" class="insight-list">
+        <p class="insight-empty">No analysis data yet.</p>
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <h3>Average Readiness by Role</h3>
+      <p class="insight-description">
+        Average readiness score calculated from stored analyses.
+      </p>
+      <div id="readiness-insight" class="insight-list">
+        <p class="insight-empty">No analysis data yet.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
 
 <div class="toast" id="toast"></div>
 
@@ -744,6 +908,69 @@ async function compareRoles(){
     document.getElementById('compare-panel').scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){showToast('Compare failed');}
   finally{document.getElementById('compare-btn').disabled=false;}
+}
+async function loadInsights(){
+  try{
+    const res=await fetch('/api/insights');
+    const data=await res.json();
+
+    if(data.error) throw new Error(data.error);
+
+    // Most frequently missing skills
+    const missingList=document.getElementById('missing-skills-insight');
+    missingList.innerHTML='';
+
+    if(data.top_missing_skills.length){
+      data.top_missing_skills.forEach(item=>{
+        missingList.innerHTML+=`
+          <div class="insight-row">
+            <span>${item.skill}</span>
+            <strong>${item.count}</strong>
+          </div>
+        `;
+      });
+    }else{
+      missingList.innerHTML='<p class="insight-empty">No analysis data yet.</p>';
+    }
+
+    // Analyses by role
+    const roleList=document.getElementById('role-analysis-insight');
+    roleList.innerHTML='';
+
+    if(data.analyses_by_role.length){
+      data.analyses_by_role.forEach(item=>{
+        roleList.innerHTML+=`
+          <div class="insight-row">
+            <span>${item.role}</span>
+            <strong>${item.count}</strong>
+          </div>
+        `;
+      });
+    }else{
+      roleList.innerHTML='<p class="insight-empty">No analysis data yet.</p>';
+    }
+
+    // Average readiness
+    const readinessList=document.getElementById('readiness-insight');
+    readinessList.innerHTML='';
+
+    if(data.average_readiness.length){
+      data.average_readiness.forEach(item=>{
+        readinessList.innerHTML+=`
+          <div class="insight-row">
+            <span>${item.role}</span>
+            <strong>${item.average}%</strong>
+          </div>
+        `;
+      });
+    }else{
+      readinessList.innerHTML='<p class="insight-empty">No analysis data yet.</p>';
+    }
+
+  }catch(e){
+    showToast('Could not load insights');
+    console.error(e);
+  }
 }
 
 function resetAll(){

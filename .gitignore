@@ -27,3 +27,6 @@ uploads/
 
 # Large data files
 data/*.csv
+
+# Local SQLite database
+skillradar.db

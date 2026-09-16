@@ -10,7 +10,12 @@ from google import genai
 from analyzer import analyze_gap, extract_skills_from_text, parse_manual_skills, get_all_roles
 from data.job_roles import JOB_ROLES
 from ml_predictor import ml_analyze, predict_role
-
+from db import (
+    save_submission,
+    get_top_missing_skills,
+    get_analysis_count_by_role,
+    get_average_readiness_by_role
+)
 load_dotenv()
 
 app = Flask(__name__)
@@ -110,8 +115,15 @@ def analyze():
             result["ai_recommendations"] = []
 
         result["student_skills"] = skills
-        return jsonify(result)
 
+        # Save analysis to database
+        try:
+            submission_id = save_submission(result)
+            result["submission_id"] = submission_id
+        except Exception:
+            result["submission_id"] = None
+
+        return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -181,7 +193,25 @@ def compare_roles():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+@app.route("/api/insights", methods=["GET"])
+def insights():
+    try:
+        return jsonify({
+            "top_missing_skills": [
+                {"skill": skill, "count": count}
+                for skill, count in get_top_missing_skills()
+            ],
+            "analyses_by_role": [
+                {"role": role, "count": count}
+                for role, count in get_analysis_count_by_role()
+            ],
+            "average_readiness": [
+                {"role": role, "average": average}
+                for role, average in get_average_readiness_by_role()
+            ]
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
