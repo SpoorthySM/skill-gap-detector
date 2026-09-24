@@ -115,13 +115,16 @@ def analyze():
             result["ai_recommendations"] = []
 
         result["student_skills"] = skills
-
         try:
             submission_id = save_submission(result)
             result["submission_id"] = submission_id
+
         except Exception as e:
-            print(f"Database save failed: {e}")
-            result["submission_id"] = None
+            app.logger.exception("Database save failed")
+            return jsonify({
+                "error": "Database save failed",
+                "details": str(e)
+            }), 500
 
         return jsonify(result)
     except Exception as e:
