@@ -116,11 +116,11 @@ def analyze():
 
         result["student_skills"] = skills
 
-        # Save analysis to database
         try:
             submission_id = save_submission(result)
             result["submission_id"] = submission_id
-        except Exception:
+        except Exception as e:
+            print(f"Database save failed: {e}")
             result["submission_id"] = None
 
         return jsonify(result)
