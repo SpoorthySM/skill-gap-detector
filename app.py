@@ -121,10 +121,7 @@ def analyze():
 
         except Exception as e:
             app.logger.exception("Database save failed")
-            return jsonify({
-                "error": "Database save failed",
-                "details": str(e)
-            }), 500
+            result["submission_id"] = None
 
         return jsonify(result)
     except Exception as e:
